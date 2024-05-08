@@ -130,13 +130,12 @@ static uchar    idleRate;   /* repeat rate for keyboards, never used for mice */
 static void advance_mouse(uint8_t phase)
 {
     if (phase > 43){
-        reportBuffer.dx =  heart_table[86-phase].x;
-        reportBuffer.dy =  heart_table[86-phase].y;
+        reportBuffer.dx =  heart_table[87-phase].x;
+        reportBuffer.dy =  heart_table[87-phase].y;
     }else{
         reportBuffer.dx =  heart_table[phase].x;
         reportBuffer.dy = -heart_table[phase].y;
     }
-    phase++;
 }
 
 usbMsgLen_t usbFunctionSetup(uchar data[8])
@@ -216,7 +215,10 @@ int __attribute__((noreturn)) main(void)
     int   led_timer   = 0;
     uchar led_counter = 0;
 
+#define BR_START 160
+
     uint8_t phase = 0;
+    uint8_t brightness = BR_START;
 
     wdt_enable(WDTO_1S);
     /* Even if you don't use the watchdog, turn it off here. On newer devices,
@@ -231,8 +233,8 @@ int __attribute__((noreturn)) main(void)
     usbInit();
 
     // set up LED PWM timer0
-    TCCR1 = (1 << CTC1)|(1 << CS10);
-    GTCCR = (1<<PWM1B)|(1<<COM1B0)|(1<<COM1B0);
+    TCCR1 = (1 << CS10);
+    GTCCR = (1<<PWM1B)|(1<<COM1B0);
 
     sei(); // global interrupt enable
 
@@ -248,10 +250,22 @@ int __attribute__((noreturn)) main(void)
             /* called after every poll of the interrupt endpoint */
             advance_mouse(phase);
 
-            phase++;
-            if (phase > 85) phase = 0;
+            uint8_t pp;
+            if (phase > 43){
+                pp = 87-phase;
+                brightness += heart_table[pp].y/2;
+            }else{
+                pp=phase;
+                brightness -= heart_table[pp].y/2;
+            }
+            OCR1B = brightness;
 
-            OCR1B = phase * 4;
+            phase++;
+            if (phase > 85)
+            {
+                phase = 0;
+                brightness = BR_START;
+            }
 
             DBG1(0x03, 0, 0);   /* debug output: interrupt report prepared */
             usbSetInterrupt((void *)&reportBuffer, sizeof(reportBuffer));
