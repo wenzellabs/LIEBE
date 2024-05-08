@@ -243,8 +243,8 @@ extern void calibrateOscillator(void);
 #define USB_CFG_DEVICE_VERSION  0x42, 0x23
 /* Version number of the device: Minor number first, then major number.
  */
-#define USB_CFG_VENDOR_NAME     'u', 's', 'b', 'l', 'o', 'v', 'e'
-#define USB_CFG_VENDOR_NAME_LEN 7
+#define USB_CFG_VENDOR_NAME     'w', 'e', 'n', 'z', 'e', 'l', 'l', 'a', 'b', 's'
+#define USB_CFG_VENDOR_NAME_LEN 10
 /* These two values define the vendor name returned by the USB device. The name
  * must be given as a list of characters under single quotes. The characters
  * are interpreted as Unicode (UTF-16) entities.
@@ -253,7 +253,7 @@ extern void calibrateOscillator(void);
  * obdev's free shared VID/PID pair. See the file USB-IDs-for-free.txt for
  * details.
  */
-#define USB_CFG_DEVICE_NAME     'h', 'e', 'a', 'r', 't'
+#define USB_CFG_DEVICE_NAME     'L', 'I', 'E', 'B', 'E'
 #define USB_CFG_DEVICE_NAME_LEN 5
 /* Same as above for the device name. If you don't want a device name, undefine
  * the macros. See the file USB-IDs-for-free.txt before you assign a name if
