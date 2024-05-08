@@ -26,9 +26,7 @@ publish any hardware using these IDs! This is for demonstration only!
 #include "usbdrv.h"
 #include "oddebug.h"        /* This is also an example for using debug macros */
 
-/* ------------------------------------------------------------------------- */
 /* ----------------------------- USB interface ----------------------------- */
-/* ------------------------------------------------------------------------- */
 
 PROGMEM const char usbHidReportDescriptor[52] = { /* USB report descriptor, size must match usbconfig.h */
     0x05, 0x01,                    // USAGE_PAGE (Generic Desktop)
@@ -141,8 +139,6 @@ static void advance_mouse(uint8_t phase)
     phase++;
 }
 
-/* ------------------------------------------------------------------------- */
-
 usbMsgLen_t usbFunctionSetup(uchar data[8])
 {
     usbRequest_t    *rq = (void *)data;
@@ -168,9 +164,7 @@ usbMsgLen_t usbFunctionSetup(uchar data[8])
     return 0;   /* default for not implemented requests: return no data back to host */
 }
 
-/* ------------------------------------------------------------------------- */
 /* ------------------------ Oscillator Calibration ------------------------- */
-/* ------------------------------------------------------------------------- */
 
 /* Calibrate the RC oscillator. Our timing reference is the Start Of Frame
  * signal (a single SE0 bit) repeating every millisecond immediately after
@@ -216,7 +210,6 @@ For version 5.x RC oscillators (those with a split range of 2x128 steps, e.g.
 ATTiny25, ATTiny45, ATTiny85), it may be useful to search for the optimum in
 both regions.
  */
-/* ------------------------------------------------------------------------- */
 
 int __attribute__((noreturn)) main(void)
 {
@@ -236,22 +229,15 @@ int __attribute__((noreturn)) main(void)
     odDebugInit();
     DBG1(0x00, 0, 0);       /* debug output: main starts */
     usbInit();
-#if 0
-    usbDeviceDisconnect();  /* enforce re-enumeration, do this while interrupts are disabled! */
-    i = 0;
-    while(--i){             /* fake USB disconnect for > 250 ms */
-        wdt_reset();
-        _delay_ms(1);
-    }
-    usbDeviceConnect();
-#endif
-    sei();
 
-    /* usbflattiny code */
+    // set up LED PWM timer0
+    TCCR1 = (1 << CTC1)|(1 << CS10);
+    GTCCR = (1<<PWM1B)|(1<<COM1B0)|(1<<COM1B0);
+
+    sei(); // global interrupt enable
+
+    // LED pin
     DDRB |= (1<<PORTB3);
-
-    PORTB |= (1<<PORTB3);
-    /* /usbflattiny code */
 
     DBG1(0x01, 0, 0);       /* debug output: main loop starts */
     for(;;){                /* main event loop */
@@ -261,22 +247,14 @@ int __attribute__((noreturn)) main(void)
         if(usbInterruptIsReady()){
             /* called after every poll of the interrupt endpoint */
             advance_mouse(phase);
+
             phase++;
             if (phase > 85) phase = 0;
+
+            OCR1B = phase * 4;
+
             DBG1(0x03, 0, 0);   /* debug output: interrupt report prepared */
             usbSetInterrupt((void *)&reportBuffer, sizeof(reportBuffer));
         }
-        /* usbflattiny code */
-        led_timer++;
-        if (led_timer == 23*1000)
-        {
-            led_counter++;
-            if (led_counter == 0x10) led_counter = 0;
-            if (led_counter & 0x2) PORTB |= (1<<PORTB3); else PORTB &= ~(1<<PORTB3);
-            led_timer = 0;
-        }
-        /* /usbflattiny code */
     }
 }
-
-/* ------------------------------------------------------------------------- */
